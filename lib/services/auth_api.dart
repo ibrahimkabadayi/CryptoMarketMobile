@@ -1,25 +1,85 @@
-import 'package:http/http.dart' as http;
-import 'dart:developer' as developer;
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import '../core/constants.dart';
+import '../models/auth_models.dart';
+import 'api_client.dart';
 
-class AuthApi{
+/// Authentication API service.
+/// Mirrors: frontend/src/api/authApi.ts
+class AuthApi {
+  final ApiClient _apiClient;
+  final FlutterSecureStorage _storage;
 
-  Future<void> login(String email, String password) async {
-    final response = await http.post(Uri.parse("http://localhost:5000/api/auth/login"),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'email': email,
-      'password': password
-    }));
+  AuthApi({required ApiClient apiClient, FlutterSecureStorage? storage})
+      : _apiClient = apiClient,
+        _storage = storage ?? const FlutterSecureStorage();
 
-    if (response.statusCode == 200){
-      final data = jsonDecode(response.body);
-      final token = data['token'];
+  /// Login and store JWT token securely.
+  Future<LoginResponse> login(LoginRequest credentials) async {
+    final response = await _apiClient.dio.post(
+      '/api/auth/login',
+      data: credentials.toJson(),
+    );
+    final loginResponse = LoginResponse.fromJson(response.data);
 
-      developer.log("Login Succesfull token: $token");
-    } else{
-      developer.log("Login unsuccessfull: Status Code ${response.statusCode}");
+    // Store token securely
+    await _storage.write(key: AppConstants.tokenKey, value: loginResponse.token);
+    debugPrint('Login successful, token stored.');
+
+    return loginResponse;
+  }
+
+  /// Register a new user.
+  Future<RegisterResponse> register(RegisterRequest data) async {
+    final response = await _apiClient.dio.post(
+      '/api/auth/register',
+      data: data.toJson(),
+    );
+    return RegisterResponse.fromJson(response.data);
+  }
+
+  /// Clear stored token (logout).
+  Future<void> logout() async {
+    await _storage.delete(key: AppConstants.tokenKey);
+    debugPrint('Token cleared, user logged out.');
+  }
+
+  /// Check if user has a valid (non-expired) token.
+  Future<bool> isLoggedIn() async {
+    final token = await _storage.read(key: AppConstants.tokenKey);
+    if (token == null || token.isEmpty) return false;
+
+    try {
+      return !JwtDecoder.isExpired(token);
+    } catch (e) {
+      debugPrint('Token validation failed: $e');
+      return false;
     }
   }
-  
+
+  /// Extract userId from JWT token claims.
+  /// Tries common claim names: nameid, sub, userId, nameidentifier.
+  Future<String?> getUserIdFromToken() async {
+    final token = await _storage.read(key: AppConstants.tokenKey);
+    if (token == null || token.isEmpty) return null;
+
+    try {
+      final decoded = JwtDecoder.decode(token);
+      return decoded['nameid'] as String? ??
+          decoded['sub'] as String? ??
+          decoded['userId'] as String? ??
+          decoded[
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+              as String?;
+    } catch (e) {
+      debugPrint('Failed to decode JWT: $e');
+      return null;
+    }
+  }
+
+  /// Get the raw token for SignalR auth (future use).
+  Future<String?> getToken() async {
+    return await _storage.read(key: AppConstants.tokenKey);
+  }
 }
