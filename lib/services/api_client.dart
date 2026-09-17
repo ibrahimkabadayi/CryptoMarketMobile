@@ -20,7 +20,7 @@ class ApiClient {
       : _storage = storage ?? const FlutterSecureStorage() {
     _dio = Dio(
       BaseOptions(
-        baseURL: AppConstants.apiBaseUrl,
+        baseUrl: AppConstants.apiBaseUrl,
         headers: {'Content-Type': 'application/json'},
         connectTimeout: const Duration(milliseconds: AppConstants.requestTimeout),
         receiveTimeout: const Duration(milliseconds: AppConstants.requestTimeout),
