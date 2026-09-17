@@ -1,5 +1,5 @@
-/// Market data models.
-/// Mirrors: frontend/src/types/marketTypes.ts
+// Market data models.
+// Mirrors: frontend/src/types/marketTypes.ts
 
 class Coin {
   final String name;
@@ -30,6 +30,7 @@ class Coin {
     marketCap: (json['marketCap'] as num?)?.toDouble() ?? 0.0,
     isCapped: json['isCapped'] as bool? ?? false,
     iconUrlPng: json['iconUrlPng'] as String? ?? json['IconUrlPng'] as String?,
+    priceChangeStatus: json['priceChangeStatus'] as String? ?? 'none',
   );
 
   Coin copyWith({
@@ -88,6 +89,8 @@ class PriceHistory {
         ? json['timestamp'] as int
         : DateTime.parse(json['timestamp'].toString()).millisecondsSinceEpoch,
   );
+
+  bool get isUp => closePrice >= openPrice;
 }
 
 class PriceUpdateMessage {

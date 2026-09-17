@@ -1,5 +1,5 @@
-/// Limit order data models.
-/// Mirrors: frontend/src/types/limitOrderTypes.ts
+// Limit order data models.
+// Mirrors: frontend/src/types/limitOrderTypes.ts
 
 class LimitOrderDto {
   final String id;

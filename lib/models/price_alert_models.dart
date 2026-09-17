@@ -1,5 +1,5 @@
-/// Price alert data models.
-/// Mirrors: frontend/src/types/priceAlertTypes.ts
+// Price alert data models.
+// Mirrors: frontend/src/types/priceAlertTypes.ts
 
 class PriceAlertDto {
   final String id;
