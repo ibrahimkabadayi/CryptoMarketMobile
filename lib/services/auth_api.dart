@@ -8,16 +8,15 @@ import 'api_client.dart';
 /// Authentication API service.
 /// Mirrors: frontend/src/api/authApi.ts
 class AuthApi {
-  final ApiClient _apiClient;
+  final ApiClient apiClient;
   final FlutterSecureStorage _storage;
 
-  AuthApi({required ApiClient apiClient, FlutterSecureStorage? storage})
-      : _apiClient = apiClient,
-        _storage = storage ?? const FlutterSecureStorage();
+  AuthApi({required this.apiClient, FlutterSecureStorage? storage})
+      : _storage = storage ?? const FlutterSecureStorage();
 
   /// Login and store JWT token securely.
   Future<LoginResponse> login(LoginRequest credentials) async {
-    final response = await _apiClient.dio.post(
+    final response = await apiClient.dio.post(
       '/api/auth/login',
       data: credentials.toJson(),
     );
@@ -32,7 +31,7 @@ class AuthApi {
 
   /// Register a new user.
   Future<RegisterResponse> register(RegisterRequest data) async {
-    final response = await _apiClient.dio.post(
+    final response = await apiClient.dio.post(
       '/api/auth/register',
       data: data.toJson(),
     );
