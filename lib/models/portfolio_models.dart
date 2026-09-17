@@ -1,5 +1,5 @@
-/// Portfolio data models.
-/// Mirrors: frontend/src/types/portfolioTypes.ts
+// Portfolio data models.
+// Mirrors: frontend/src/types/portfolioTypes.ts
 
 class Dashboard {
   final String walletId;
@@ -110,4 +110,6 @@ class Transaction {
     }
     return 'unknown';
   }
+
+  bool get isBuy => transactionType.toLowerCase() == 'buy';
 }

@@ -12,6 +12,8 @@ import '../../views/portfolio_screen.dart';
 import '../../views/market_news_screen.dart';
 import '../../views/news_detail_screen.dart';
 import '../../views/settings_screen.dart';
+import '../../views/notifications_screen.dart';
+import '../../views/price_alerts_screen.dart';
 
 /// App router configuration using GoRouter.
 /// Mirrors the route structure from: frontend/src/routers/index.ts
@@ -38,6 +40,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/price-alerts',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const PriceAlertsScreen(),
+      ),
 
       // Main app shell with bottom nav
       ShellRoute(
@@ -46,7 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            redirect: (_, __) => '/market',
+            redirect: (_, _) => '/market',
           ),
           GoRoute(
             path: '/market',

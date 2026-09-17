@@ -1,5 +1,5 @@
-/// Notification data models.
-/// Mirrors: frontend/src/types/notificationTypes.ts
+// Notification data models.
+// Mirrors: frontend/src/types/notificationTypes.ts
 
 class NotificationDto {
   final String id;

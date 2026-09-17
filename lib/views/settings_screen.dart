@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
+import '../providers/price_alert_provider.dart';
 
 /// Settings / "More" screen.
 /// Shows user info, logout, and app info.
@@ -12,6 +14,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    final notifState = ref.watch(notificationProvider);
+    final alertState = ref.watch(priceAlertProvider);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -76,16 +80,69 @@ class SettingsScreen extends ConsumerWidget {
                   context,
                   icon: Icons.notifications_outlined,
                   label: 'Notifications',
-                  subtitle: 'Manage notification preferences',
-                  onTap: () {},
+                  subtitle: notifState.unreadCount > 0
+                      ? '${notifState.unreadCount} unread notification${notifState.unreadCount > 1 ? 's' : ''}'
+                      : 'View and manage alerts',
+                  trailing: notifState.unreadCount > 0
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.voltGreen,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${notifState.unreadCount}',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                          ],
+                        )
+                      : null,
+                  onTap: () => context.push('/notifications'),
                 ),
                 const Divider(height: 0),
                 _menuItem(
                   context,
                   icon: Icons.notification_important_outlined,
                   label: 'Price Alerts',
-                  subtitle: 'View and manage active alerts',
-                  onTap: () {},
+                  subtitle: alertState.activeCount > 0
+                      ? '${alertState.activeCount} active alert${alertState.activeCount > 1 ? 's' : ''}'
+                      : 'Manage price thresholds',
+                  trailing: alertState.activeCount > 0
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceBg,
+                                border: Border.all(color: AppColors.voltGreen),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${alertState.activeCount}',
+                                style: const TextStyle(
+                                  color: AppColors.voltGreen,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                          ],
+                        )
+                      : null,
+                  onTap: () => context.push('/price-alerts'),
                 ),
                 const Divider(height: 0),
                 _menuItem(
@@ -93,7 +150,17 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.info_outline,
                   label: 'About',
                   subtitle: 'CryptoMarket v0.1.0',
-                  onTap: () {},
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'CryptoMarket',
+                      applicationVersion: 'v0.1.0',
+                      applicationIcon: const Icon(Icons.currency_bitcoin, color: AppColors.voltGreen, size: 36),
+                      children: const [
+                        Text('Decentralized crypto trading terminal and market intelligence mobile client.'),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -134,12 +201,13 @@ class SettingsScreen extends ConsumerWidget {
     required String label,
     required String subtitle,
     required VoidCallback onTap,
+    Widget? trailing,
   }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.textSecondary, size: 22),
       title: Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+      trailing: trailing ?? const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
       onTap: onTap,
     );
   }

@@ -1,5 +1,5 @@
-/// Market news data models.
-/// Mirrors: frontend/src/types/marketNewsTypes.ts
+// Market news data models.
+// Mirrors: frontend/src/types/marketNewsTypes.ts
 
 class MarketNews {
   final String title;

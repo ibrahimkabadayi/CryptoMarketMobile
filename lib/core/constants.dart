@@ -7,7 +7,7 @@ class AppConstants {
   /// Android emulator uses 10.0.2.2 to reach host localhost.
   /// iOS simulator can use localhost directly.
   /// For web debugging, use localhost.
-  static const String apiBaseUrl = 'http://10.0.2.2:5000';
+  static const String apiBaseUrl = 'http://localhost:5000';
 
   /// Request timeout in milliseconds.
   static const int requestTimeout = 10000;

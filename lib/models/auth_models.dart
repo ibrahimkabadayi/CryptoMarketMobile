@@ -1,5 +1,5 @@
-/// Authentication data models.
-/// Mirrors: frontend/src/types/authTypes.ts
+// Authentication data models.
+// Mirrors: frontend/src/types/authTypes.ts
 
 class LoginRequest {
   final String email;
