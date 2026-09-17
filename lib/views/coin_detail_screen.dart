@@ -11,6 +11,8 @@ import '../models/market_models.dart';
 import '../models/market_news_models.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
+import '../services/auth_api.dart';
+import 'market_screen.dart';
 
 // ═══════════════════════════════════════════════════════════
 // LOCAL PROVIDERS (scoped to this screen)
@@ -231,8 +233,7 @@ final _priceAlertFormProvider =
 // COIN DETAIL SCREEN
 // ═══════════════════════════════════════════════════════════
 
-import '../services/auth_api.dart';
-import 'market_screen.dart';
+
 
 /// Coin detail screen — chart, limit orders, price alerts, news.
 /// Mirrors: frontend/src/views/CoinDetailView.vue
@@ -339,7 +340,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
                     coin?.resolvedIconUrl ?? '',
                     width: 28,
                     height: 28,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 28, height: 28,
                       decoration: BoxDecoration(
                         color: AppColors.deepBg,
@@ -660,8 +661,6 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
 
   // ── LIMIT ORDER SECTION ──────────────────────────────────
   Widget _buildLimitOrderSection(BuildContext context, _LimitOrderState orders) {
-    final alertForm = ref.watch(_priceAlertFormProvider);
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),

@@ -5,15 +5,16 @@ import '../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import '../models/market_models.dart';
+import 'widgets/shimmer_loading.dart';
 
 /// Market API service provider.
-final marketApiProvider = Provider<_MarketApi>(
-  (ref) => _MarketApi(ref.read(apiClientProvider)),
+final marketApiProvider = Provider<MarketApi>(
+  (ref) => MarketApi(ref.read(apiClientProvider)),
 );
 
-class _MarketApi {
+class MarketApi {
   final ApiClient _apiClient;
-  _MarketApi(this._apiClient);
+  MarketApi(this._apiClient);
 
   Future<List<Coin>> getAllCoins() async {
     final response = await _apiClient.dio.get('/api/market');
@@ -59,7 +60,7 @@ class MarketState {
 }
 
 class MarketNotifier extends StateNotifier<MarketState> {
-  final _MarketApi _api;
+  final MarketApi _api;
   MarketNotifier(this._api) : super(const MarketState());
 
   Future<void> fetchCoins() async {
@@ -235,13 +236,19 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           ),
 
           // ── Coin list ─────────────────────────────────
-          SliverList.builder(
-            itemCount: coins.length,
-            itemBuilder: (context, index) {
-              final coin = coins[index];
-              return _CoinListTile(coin: coin);
-            },
-          ),
+          if (market.isLoading && market.coins.isEmpty)
+            SliverList.builder(
+              itemCount: 8,
+              itemBuilder: (_, _) => const ShimmerListTile(),
+            )
+          else
+            SliverList.builder(
+              itemCount: coins.length,
+              itemBuilder: (context, index) {
+                final coin = coins[index];
+                return _CoinListTile(coin: coin);
+              },
+            ),
 
           // Bottom padding
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -310,7 +317,7 @@ class _CoinListTile extends StatelessWidget {
                 coin.resolvedIconUrl,
                 width: 40,
                 height: 40,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(

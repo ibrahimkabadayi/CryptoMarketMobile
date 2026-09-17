@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
+import '../providers/notification_provider.dart';
+import 'widgets/connectivity_banner.dart';
 
 /// Home scaffold with bottom navigation bar.
 /// This wraps all main tab screens (Market, Portfolio, News, Settings).
-class HomeView extends StatelessWidget {
+class HomeView extends ConsumerWidget {
   final Widget child;
 
   const HomeView({super.key, required this.child});
@@ -25,11 +28,12 @@ class HomeView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _currentIndex(context);
+    final unreadCount = ref.watch(notificationProvider.select((s) => s.unreadCount));
 
     return Scaffold(
-      body: child,
+      body: ConnectivityWrapper(child: child),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(
@@ -45,11 +49,31 @@ class HomeView extends StatelessWidget {
           },
           items: _tabs
               .map(
-                (tab) => BottomNavigationBarItem(
-                  icon: Icon(tab.icon),
-                  activeIcon: Icon(tab.activeIcon),
-                  label: tab.label,
-                ),
+                (tab) {
+                  final isSettings = tab.path == '/settings';
+                  final icon = isSettings && unreadCount > 0
+                      ? Badge.count(
+                          count: unreadCount,
+                          backgroundColor: AppColors.voltGreen,
+                          textColor: Colors.black,
+                          child: Icon(tab.icon),
+                        )
+                      : Icon(tab.icon);
+                  final activeIcon = isSettings && unreadCount > 0
+                      ? Badge.count(
+                          count: unreadCount,
+                          backgroundColor: AppColors.voltGreen,
+                          textColor: Colors.black,
+                          child: Icon(tab.activeIcon),
+                        )
+                      : Icon(tab.activeIcon);
+
+                  return BottomNavigationBarItem(
+                    icon: icon,
+                    activeIcon: activeIcon,
+                    label: tab.label,
+                  );
+                },
               )
               .toList(),
         ),

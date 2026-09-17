@@ -7,13 +7,13 @@ import '../services/api_client.dart';
 import '../models/portfolio_models.dart';
 
 // ── Portfolio API ──────────────────────────────────────────
-final portfolioApiProvider = Provider<_PortfolioApi>(
-  (ref) => _PortfolioApi(ref.read(apiClientProvider)),
+final portfolioApiProvider = Provider<PortfolioApi>(
+  (ref) => PortfolioApi(ref.read(apiClientProvider)),
 );
 
-class _PortfolioApi {
+class PortfolioApi {
   final ApiClient _apiClient;
-  _PortfolioApi(this._apiClient);
+  PortfolioApi(this._apiClient);
 
   Future<Dashboard> getDashboard() async {
     final response = await _apiClient.dio.get('/api/wallets');
@@ -73,7 +73,7 @@ class PortfolioState {
 }
 
 class PortfolioNotifier extends StateNotifier<PortfolioState> {
-  final _PortfolioApi _api;
+  final PortfolioApi _api;
   PortfolioNotifier(this._api) : super(const PortfolioState());
 
   Future<void> fetchDashboard() async {

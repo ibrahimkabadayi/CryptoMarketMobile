@@ -7,13 +7,13 @@ import '../services/api_client.dart';
 import '../models/market_news_models.dart';
 
 // ── Market News API ────────────────────────────────────────
-final marketNewsApiProvider = Provider<_MarketNewsApi>(
-  (ref) => _MarketNewsApi(ref.read(apiClientProvider)),
+final marketNewsApiProvider = Provider<MarketNewsApi>(
+  (ref) => MarketNewsApi(ref.read(apiClientProvider)),
 );
 
-class _MarketNewsApi {
+class MarketNewsApi {
   final ApiClient _apiClient;
-  _MarketNewsApi(this._apiClient);
+  MarketNewsApi(this._apiClient);
 
   Future<List<MarketNews>> getRecentNews() async {
     final response = await _apiClient.dio.get('/api/market-news');
@@ -50,7 +50,7 @@ class MarketNewsState {
 }
 
 class MarketNewsNotifier extends StateNotifier<MarketNewsState> {
-  final _MarketNewsApi _api;
+  final MarketNewsApi _api;
   MarketNewsNotifier(this._api) : super(const MarketNewsState());
 
   Future<void> fetchRecentNews() async {
