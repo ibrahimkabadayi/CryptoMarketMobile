@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📱 CryptoMarket Mobile App
+# CryptoMarket Mobile App
 
 **High-performance, cross-platform cryptocurrency tracking, trading, and portfolio management mobile application built with Flutter & Dart.**
 
@@ -16,7 +16,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
@@ -37,7 +37,7 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 **CryptoMarket Mobile** is a production-grade, native-feel mobile client for the **CryptoMarket** microservices ecosystem. Built with pure **Flutter and Dart**, it targets both **Android** and **iOS** from a single codebase while providing:
 
@@ -50,24 +50,24 @@
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 | Category | Feature | Description |
 |---|---|---|
-| 📈 **Market Intelligence** | Live Coin Directory | Searchable list of all tracked crypto assets with prices, 24h changes, high/low, and volume |
-| 📊 **Financial Charts** | Interactive Candlesticks | Candlestick OHLCV charts powered by `fl_chart` with timeframe selector (`1H`, `24H`, `7D`, `1M`) |
-| 💼 **Portfolio & Wallet** | Asset & Balance Tracking | Real-time fiat balance, invested total, individual asset holdings, and deposit/withdraw workflows |
-| ⚡ **Trading Execution** | Buy & Sell Coins | Direct market-order buy and sell execution with immediate balance and holding recalculation |
-| 🎯 **Limit Orders** | Automated Trading | Place conditional limit buy/sell orders; view active orders with inline cancellation |
-| 🔔 **Price Alerts** | Custom Thresholds | Configure alerts for specific price targets (Above/Below) with quick toggle deactivations |
-| 📬 **Notifications Center** | In-App Alerts | Read notifications, filter by unread, mark individual or all as read, and badge counters |
-| 📰 **Market News** | Integrated News Feed | Read top cryptocurrency news with category tags, related assets, and rich article view |
-| 🔐 **Security & Auth** | JWT Authentication | Register, login, auto-token refresh, decode user ID, and encrypted token storage |
-| 🛡️ **Reliability** | Offline & Error Handling | Real-time offline detection banner, safe error boundary fallback, and shimmer skeletons |
+| **Market Intelligence** | Live Coin Directory | Searchable list of all tracked crypto assets with prices, 24h changes, high/low, and volume |
+| **Financial Charts** | Interactive Candlesticks | Candlestick OHLCV charts powered by `fl_chart` with timeframe selector (`1H`, `24H`, `7D`, `1M`) |
+| **Portfolio & Wallet** | Asset & Balance Tracking | Real-time fiat balance, invested total, individual asset holdings, and deposit/withdraw workflows |
+| **Trading Execution** | Buy & Sell Coins | Direct market-order buy and sell execution with immediate balance and holding recalculation |
+| **Limit Orders** | Automated Trading | Place conditional limit buy/sell orders; view active orders with inline cancellation |
+| **Price Alerts** | Custom Thresholds | Configure alerts for specific price targets (Above/Below) with quick toggle deactivations |
+| **Notifications Center** | In-App Alerts | Read notifications, filter by unread, mark individual or all as read, and badge counters |
+| **Market News** | Integrated News Feed | Read top cryptocurrency news with category tags, related assets, and rich article view |
+| **Security & Auth** | JWT Authentication | Register, login, auto-token refresh, decode user ID, and encrypted token storage |
+| **Reliability** | Offline & Error Handling | Real-time offline detection banner, safe error boundary fallback, and shimmer skeletons |
 
 ---
 
-## 🏗️ Architecture & Design
+## Architecture & Design
 
 The mobile client communicates exclusively with the **YARP API Gateway** (`:5000`), which routes authenticated traffic to the underlying microservices:
 
@@ -111,7 +111,7 @@ graph TB
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 | Layer | Technology | Version | Purpose |
 |---|---|---|---|
@@ -132,7 +132,7 @@ graph TB
 
 ---
 
-## 📂 Project Directory Structure
+## Project Directory Structure
 
 ```
 mobile/
@@ -208,7 +208,7 @@ mobile/
 
 ---
 
-## 🎨 Design System & Theme
+## Design System & Theme
 
 The UI is built with a custom dark-mode theme inspired by institutional financial terminals:
 
@@ -222,7 +222,7 @@ The UI is built with a custom dark-mode theme inspired by institutional financia
 
 ---
 
-## 🔌 API Gateway & Backend Integration
+## API Gateway & Backend Integration
 
 All client network requests pass through the **API Gateway** (`http://localhost:5000` or `http://10.0.2.2:5000` on Android):
 
@@ -269,7 +269,7 @@ This ensures network timeouts or accidental double taps never result in duplicat
 
 ---
 
-## ⚡ State Management & Data Flow
+## State Management & Data Flow
 
 State is managed using **Riverpod 2.5 StateNotifiers**:
 
@@ -306,7 +306,7 @@ State is managed using **Riverpod 2.5 StateNotifiers**:
 
 ---
 
-## 📱 Screens & User Experience
+## Screens & User Experience
 
 ### 1. Splash & Authentication (`/splash`, `/login`, `/register`)
 - **Splash Screen**: Checks encrypted token validity in background. If valid, instantly redirects to home; otherwise, presents the login flow.
@@ -345,7 +345,7 @@ State is managed using **Riverpod 2.5 StateNotifiers**:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -452,7 +452,7 @@ flutter test
 
 ---
 
-## 🔒 Security & Offline Resilience
+## Security & Offline Resilience
 
 - **Encrypted Token Storage**: JWT bearer tokens are never stored in plain text. They are saved using `flutter_secure_storage`, leveraging **iOS Keychain** and **Android EncryptedSharedPreferences**.
 - **Automatic Token Injection**: The `ApiClient` Dio interceptor retrieves the secure token and injects it into every outgoing request. If an endpoint returns `401 Unauthorized`, the session is cleared and the user is safely routed back to login.
@@ -463,5 +463,5 @@ flutter test
 ---
 
 <div align="center">
-  <sub>Developed with ❤️ as part of the CryptoMarket Microservices Ecosystem</sub>
+  <sub>Developed as part of the CryptoMarket Microservices Ecosystem</sub>
 </div>
