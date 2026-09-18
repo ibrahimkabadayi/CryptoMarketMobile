@@ -2,71 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
-import '../providers/auth_provider.dart';
-import '../services/api_client.dart';
-import '../models/market_news_models.dart';
-
-// ── Market News API ────────────────────────────────────────
-final marketNewsApiProvider = Provider<MarketNewsApi>(
-  (ref) => MarketNewsApi(ref.read(apiClientProvider)),
-);
-
-class MarketNewsApi {
-  final ApiClient _apiClient;
-  MarketNewsApi(this._apiClient);
-
-  Future<List<MarketNews>> getRecentNews() async {
-    final response = await _apiClient.dio.get('/api/market-news');
-    return (response.data as List)
-        .map((e) => MarketNews.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<List<MarketNews>> getNewsByCoin(String symbol) async {
-    final response = await _apiClient.dio.get('/api/market-news/coin/$symbol');
-    return (response.data as List)
-        .map((e) => MarketNews.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-}
-
-// ── Market News State ──────────────────────────────────────
-class MarketNewsState {
-  final List<MarketNews> news;
-  final bool isLoading;
-  final String? errorMessage;
-
-  const MarketNewsState({this.news = const [], this.isLoading = false, this.errorMessage});
-
-  MarketNewsState copyWith({
-    List<MarketNews>? news,
-    bool? isLoading,
-    String? errorMessage,
-  }) => MarketNewsState(
-    news: news ?? this.news,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: errorMessage,
-  );
-}
-
-class MarketNewsNotifier extends StateNotifier<MarketNewsState> {
-  final MarketNewsApi _api;
-  MarketNewsNotifier(this._api) : super(const MarketNewsState());
-
-  Future<void> fetchRecentNews() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final news = await _api.getRecentNews();
-      state = state.copyWith(news: news, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load news.');
-    }
-  }
-}
-
-final marketNewsProvider = StateNotifierProvider<MarketNewsNotifier, MarketNewsState>(
-  (ref) => MarketNewsNotifier(ref.read(marketNewsApiProvider)),
-);
+import '../providers/market_news_provider.dart';
 
 // ── Market News Screen ─────────────────────────────────────
 /// News feed screen.

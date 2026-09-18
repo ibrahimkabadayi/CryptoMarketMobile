@@ -1,237 +1,16 @@
-import 'package:dio/dio.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
-import '../core/constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/limit_order_models.dart';
 import '../models/market_models.dart';
-import '../models/market_news_models.dart';
 import '../providers/auth_provider.dart';
-import '../services/api_client.dart';
-import '../services/auth_api.dart';
-import 'market_screen.dart';
+import '../providers/limit_order_provider.dart';
+import '../providers/market_news_provider.dart';
+import '../providers/market_provider.dart';
+import '../providers/price_alert_provider.dart';
+import 'widgets/candlestick_chart.dart';
 
-// ═══════════════════════════════════════════════════════════
-// LOCAL PROVIDERS (scoped to this screen)
-// ═══════════════════════════════════════════════════════════
-
-// ── Price History Provider ─────────────────────────────────
-class _PriceHistoryState {
-  final List<PriceHistory> history;
-  final bool isLoading;
-  const _PriceHistoryState({this.history = const [], this.isLoading = false});
-}
-
-class _PriceHistoryNotifier extends StateNotifier<_PriceHistoryState> {
-  final ApiClient _apiClient;
-  _PriceHistoryNotifier(this._apiClient) : super(const _PriceHistoryState());
-
-  Future<void> fetchHistory(String symbol, String timeframe) async {
-    state = const _PriceHistoryState(isLoading: true);
-    try {
-      final tf = AppConstants.timeframes.firstWhere((t) => t['value'] == timeframe);
-      final response = await _apiClient.dio.get(
-        '/api/market/$symbol/history',
-        queryParameters: {
-          'intervalMinutes': tf['intervalMinutes'],
-          'hoursBack': tf['hoursBack'],
-        },
-      );
-      final list = (response.data as List)
-          .map((e) => PriceHistory.fromJson(e as Map<String, dynamic>))
-          .toList()
-        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-      state = _PriceHistoryState(history: list);
-    } catch (_) {
-      state = const _PriceHistoryState();
-    }
-  }
-}
-
-final _priceHistoryProvider =
-    StateNotifierProvider<_PriceHistoryNotifier, _PriceHistoryState>(
-  (ref) => _PriceHistoryNotifier(ref.read(apiClientProvider)),
-);
-
-// ── Limit Order Provider ───────────────────────────────────
-class _LimitOrderState {
-  final List<LimitOrderDto> orders;
-  final bool isLoading;
-  final String? errorMessage;
-  final String? successMessage;
-  const _LimitOrderState({
-    this.orders = const [],
-    this.isLoading = false,
-    this.errorMessage,
-    this.successMessage,
-  });
-  _LimitOrderState copyWith({
-    List<LimitOrderDto>? orders,
-    bool? isLoading,
-    String? errorMessage,
-    String? successMessage,
-  }) => _LimitOrderState(
-    orders: orders ?? this.orders,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: errorMessage,
-    successMessage: successMessage,
-  );
-}
-
-class _LimitOrderNotifier extends StateNotifier<_LimitOrderState> {
-  final ApiClient _apiClient;
-  static const _uuid = Uuid();
-  _LimitOrderNotifier(this._apiClient) : super(const _LimitOrderState());
-
-  Future<void> fetchAll() async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final response = await _apiClient.dio.get('/api/limit-orders',
-          options: Options(headers: ApiClient.idempotencyHeaders));
-      final list = (response.data as List)
-          .map((e) => LimitOrderDto.fromJson(e as Map<String, dynamic>))
-          .toList();
-      state = state.copyWith(orders: list, isLoading: false);
-    } catch (_) {
-      state = state.copyWith(isLoading: false);
-    }
-  }
-
-  Future<bool> createOrder(CreateLimitOrderRequest req) async {
-    state = state.copyWith(errorMessage: null, successMessage: null);
-    try {
-      await _apiClient.dio.post('/api/limit-orders',
-          data: req.toJson(),
-          options: Options(headers: {'Idempotency-Key': _uuid.v4()}));
-      state = state.copyWith(successMessage: 'Order placed successfully');
-      await fetchAll();
-      return true;
-    } on DioException catch (e) {
-      state = state.copyWith(
-          errorMessage: e.response?.data?['message']?.toString() ?? 'Failed to place order');
-      return false;
-    }
-  }
-
-  Future<bool> updateOrder(String id, UpdateLimitOrderRequest req) async {
-    state = state.copyWith(errorMessage: null, successMessage: null);
-    try {
-      await _apiClient.dio.patch('/api/limit-orders/$id',
-          data: req.toJson(),
-          options: Options(headers: {'Idempotency-Key': _uuid.v4()}));
-      state = state.copyWith(successMessage: 'Order updated');
-      await fetchAll();
-      return true;
-    } catch (_) {
-      state = state.copyWith(errorMessage: 'Failed to update order');
-      return false;
-    }
-  }
-
-  Future<void> deleteOrder(String id) async {
-    try {
-      await _apiClient.dio.delete('/api/limit-orders/$id',
-          options: Options(headers: {'Idempotency-Key': _uuid.v4()}));
-      state = state.copyWith(
-        orders: state.orders.where((o) => o.id != id).toList(),
-        successMessage: 'Order deleted',
-      );
-    } catch (_) {
-      state = state.copyWith(errorMessage: 'Failed to delete');
-    }
-  }
-
-  void clearMessages() {
-    state = state.copyWith(errorMessage: null, successMessage: null);
-  }
-}
-
-final _limitOrderProvider =
-    StateNotifierProvider<_LimitOrderNotifier, _LimitOrderState>(
-  (ref) => _LimitOrderNotifier(ref.read(apiClientProvider)),
-);
-
-// ── Coin News Provider ─────────────────────────────────────
-class _CoinNewsState {
-  final List<MarketNews> news;
-  final bool isLoading;
-  const _CoinNewsState({this.news = const [], this.isLoading = false});
-}
-
-class _CoinNewsNotifier extends StateNotifier<_CoinNewsState> {
-  final ApiClient _apiClient;
-  _CoinNewsNotifier(this._apiClient) : super(const _CoinNewsState());
-
-  Future<void> fetchByCoin(String symbol) async {
-    state = const _CoinNewsState(isLoading: true);
-    try {
-      final response = await _apiClient.dio.get('/api/market-news/coin/$symbol');
-      final list = (response.data as List)
-          .map((e) => MarketNews.fromJson(e as Map<String, dynamic>))
-          .toList();
-      state = _CoinNewsState(news: list);
-    } catch (_) {
-      state = const _CoinNewsState();
-    }
-  }
-}
-
-final _coinNewsProvider =
-    StateNotifierProvider<_CoinNewsNotifier, _CoinNewsState>(
-  (ref) => _CoinNewsNotifier(ref.read(apiClientProvider)),
-);
-
-// ── Price Alert Provider ───────────────────────────────────
-class _PriceAlertFormState {
-  final bool isSubmitting;
-  final String? successMessage;
-  final String? errorMessage;
-  const _PriceAlertFormState({this.isSubmitting = false, this.successMessage, this.errorMessage});
-}
-
-class _PriceAlertFormNotifier extends StateNotifier<_PriceAlertFormState> {
-  final ApiClient _apiClient;
-  final AuthApi _authApi;
-  _PriceAlertFormNotifier(this._apiClient, this._authApi)
-      : super(const _PriceAlertFormState());
-
-  Future<bool> createAlert(String symbol, double targetPrice, bool isAbove) async {
-    state = const _PriceAlertFormState(isSubmitting: true);
-    try {
-      final userId = await _authApi.getUserIdFromToken();
-      if (userId == null) {
-        state = const _PriceAlertFormState(errorMessage: 'Not authenticated');
-        return false;
-      }
-      await _apiClient.dio.post('/api/price-alerts', data: {
-        'userId': userId,
-        'symbol': symbol,
-        'targetPrice': targetPrice,
-        'isAbove': isAbove,
-      });
-      state = const _PriceAlertFormState(successMessage: 'Alert created successfully');
-      return true;
-    } on DioException catch (e) {
-      state = _PriceAlertFormState(
-          errorMessage: e.response?.data?['message']?.toString() ?? 'Failed to create alert');
-      return false;
-    }
-  }
-
-  void clear() => state = const _PriceAlertFormState();
-}
-
-final _priceAlertFormProvider =
-    StateNotifierProvider<_PriceAlertFormNotifier, _PriceAlertFormState>(
-  (ref) => _PriceAlertFormNotifier(ref.read(apiClientProvider), ref.read(authApiProvider)),
-);
-
-// ═══════════════════════════════════════════════════════════
-// COIN DETAIL SCREEN
-// ═══════════════════════════════════════════════════════════
 
 
 
@@ -270,9 +49,9 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
 
   Future<void> _loadData() async {
     final symbol = widget.symbol;
-    ref.read(_priceHistoryProvider.notifier).fetchHistory(symbol, _selectedTimeframe);
-    ref.read(_limitOrderProvider.notifier).fetchAll();
-    ref.read(_coinNewsProvider.notifier).fetchByCoin(symbol);
+    ref.read(priceHistoryProvider.notifier).fetchHistory(symbol, _selectedTimeframe);
+    ref.read(limitOrderProvider.notifier).fetchAll();
+    ref.read(marketNewsProvider.notifier).fetchNewsByCoin(symbol);
     // Ensure market coins are loaded for header data
     if (ref.read(marketProvider).coins.isEmpty) {
       ref.read(marketProvider.notifier).fetchCoins();
@@ -310,9 +89,9 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final coin = _coinData;
-    final history = ref.watch(_priceHistoryProvider);
-    final orders = ref.watch(_limitOrderProvider);
-    final news = ref.watch(_coinNewsProvider);
+    final history = ref.watch(priceHistoryProvider);
+    final orders = ref.watch(limitOrderProvider);
+    final news = ref.watch(marketNewsProvider);
     final auth = ref.watch(authProvider);
 
     final symbolOrders = orders.orders
@@ -370,12 +149,22 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
                   _buildHeaderCard(context, coin),
                   const SizedBox(height: 12),
 
-                  // ── Stats + Timeframe ───────────────────
-                  _buildStatsRow(context, coin),
+                  // ── Market Cap Stat ─────────────────────
+                  _buildMarketCapCard(context, coin),
                   const SizedBox(height: 16),
 
                   // ── Candlestick Chart ───────────────────
-                  _buildChart(context, history),
+                  CandlestickChart(
+                    history: history.history,
+                    isLoading: history.isLoading,
+                    symbol: widget.symbol,
+                    selectedTimeframe: _selectedTimeframe,
+                    onTimeframeChanged: (tf) {
+                      setState(() => _selectedTimeframe = tf);
+                      ref.read(priceHistoryProvider.notifier)
+                          .fetchHistory(widget.symbol, _selectedTimeframe);
+                    },
+                  ),
                   const SizedBox(height: 24),
 
                   // ── Limit Order Section ─────────────────
@@ -466,201 +255,46 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
     );
   }
 
-  // ── STATS + TIMEFRAME ────────────────────────────────────
-  Widget _buildStatsRow(BuildContext context, Coin? coin) {
-    return Row(
-      children: [
-        Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Market Cap', style: Theme.of(context).textTheme.labelSmall),
-                  const SizedBox(height: 4),
-                  Text(_formatCurrency(coin?.marketCap ?? 0),
-                      style: Theme.of(context).textTheme.labelLarge),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Card(
-            color: AppColors.deepBg,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: AppConstants.timeframes.map((tf) {
-                  final isSelected = _selectedTimeframe == tf['value'];
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedTimeframe = tf['value'] as String);
-                        ref.read(_priceHistoryProvider.notifier)
-                            .fetchHistory(widget.symbol, _selectedTimeframe);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.voltGreen : Colors.transparent,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Center(
-                          child: Text(
-                            tf['label'] as String,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: isSelected ? Colors.black : AppColors.textSecondary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── CANDLESTICK CHART ────────────────────────────────────
-  Widget _buildChart(BuildContext context, _PriceHistoryState history) {
-    if (history.isLoading) {
-      return const SizedBox(
-        height: 300,
-        child: Center(child: CircularProgressIndicator(color: AppColors.voltGreen)),
-      );
-    }
-
-    if (history.history.isEmpty) {
-      return SizedBox(
-        height: 300,
-        child: Center(
-          child: Text('No chart data available', style: Theme.of(context).textTheme.bodySmall),
-        ),
-      );
-    }
-
-    final data = history.history;
-    final minLow = data.map((d) => d.lowPrice).reduce((a, b) => a < b ? a : b);
-    final maxHigh = data.map((d) => d.highPrice).reduce((a, b) => a > b ? a : b);
-    final padding = (maxHigh - minLow) * 0.1;
-
+  // ── MARKET CAP STAT CARD ─────────────────────────────────
+  Widget _buildMarketCapCard(BuildContext context, Coin? coin) {
     return Card(
-      color: AppColors.deepBg,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-        child: SizedBox(
-          height: 300,
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              maxY: maxHigh + padding,
-              minY: minLow - padding,
-              barTouchData: BarTouchData(
-                touchTooltipData: BarTouchTooltipData(
-                  tooltipPadding: const EdgeInsets.all(8),
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    final item = data[groupIndex];
-                    return BarTooltipItem(
-                      'O: \$${item.openPrice.toStringAsFixed(2)}\n'
-                      'H: \$${item.highPrice.toStringAsFixed(2)}\n'
-                      'L: \$${item.lowPrice.toStringAsFixed(2)}\n'
-                      'C: \$${item.closePrice.toStringAsFixed(2)}',
-                      Theme.of(context).textTheme.labelSmall!.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              titlesData: FlTitlesData(
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final idx = value.toInt();
-                      if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
-                      // Show ~5 labels
-                      if (data.length > 5 && idx % (data.length ~/ 5) != 0) {
-                        return const SizedBox.shrink();
-                      }
-                      final dt = DateTime.fromMillisecondsSinceEpoch(data[idx].timestamp);
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 55,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        '\$${value.toStringAsFixed(1)}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: AppColors.borderSubtle,
-                  strokeWidth: 0.5,
-                  dashArray: [4, 4],
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              barGroups: List.generate(data.length, (i) {
-                final d = data[i];
-                final isUp = d.closePrice >= d.openPrice;
-                final top = isUp ? d.closePrice : d.openPrice;
-                final bottom = isUp ? d.openPrice : d.closePrice;
-                return BarChartGroupData(
-                  x: i,
-                  barRods: [
-                    BarChartRodData(
-                      fromY: bottom,
-                      toY: top,
-                      width: data.length > 50 ? 2 : (data.length > 20 ? 4 : 6),
-                      color: isUp ? AppColors.voltGreen : AppColors.priceDown,
-                      borderRadius: BorderRadius.zero,
-                      backDrawRodData: BackgroundBarChartRodData(
-                        show: true,
-                        fromY: d.lowPrice,
-                        toY: d.highPrice,
-                        color: (isUp ? AppColors.voltGreen : AppColors.priceDown)
-                            .withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ],
-                );
-              }),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Market Cap', style: Theme.of(context).textTheme.labelSmall),
+                const SizedBox(height: 4),
+                Text(_formatCurrency(coin?.marketCap ?? 0),
+                    style: Theme.of(context).textTheme.headlineSmall),
+              ],
             ),
-          ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceBg,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Text(
+                coin?.isCapped == true ? 'Capped Supply' : 'Variable Supply',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.voltGreen,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   // ── LIMIT ORDER SECTION ──────────────────────────────────
-  Widget _buildLimitOrderSection(BuildContext context, _LimitOrderState orders) {
+  Widget _buildLimitOrderSection(BuildContext context, LimitOrderState orders) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -845,7 +479,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
     final userId = await ref.read(authApiProvider).getUserIdFromToken();
     if (userId == null) return;
 
-    final success = await ref.read(_limitOrderProvider.notifier).createOrder(
+    final success = await ref.read(limitOrderProvider.notifier).createOrder(
       CreateLimitOrderRequest(
         userId: userId,
         walletId: '', // backend will resolve
@@ -864,7 +498,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
 
   // ── PRICE ALERT SECTION ──────────────────────────────────
   Widget _buildPriceAlertSection(BuildContext context) {
-    final alertState = ref.watch(_priceAlertFormProvider);
+    final alertState = ref.watch(priceAlertProvider);
 
     return Card(
       child: Padding(
@@ -953,8 +587,8 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _alertDirection == 'above' ? AppColors.voltGreen : AppColors.error,
                 ),
-                onPressed: alertState.isSubmitting ? null : () => _submitPriceAlert(),
-                child: alertState.isSubmitting
+                onPressed: alertState.isLoading ? null : () => _submitPriceAlert(),
+                child: alertState.isLoading
                     ? const SizedBox(width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                     : Text('Set ${_alertDirection == 'above' ? 'Above' : 'Below'} Alert'),
@@ -997,7 +631,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
     final price = double.tryParse(_alertPriceController.text);
     if (price == null || price <= 0) return;
 
-    final success = await ref.read(_priceAlertFormProvider.notifier)
+    final success = await ref.read(priceAlertProvider.notifier)
         .createAlert(widget.symbol, price, _alertDirection == 'above');
     if (success) _alertPriceController.clear();
   }
@@ -1091,7 +725,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
         IconButton(
           icon: const Icon(Icons.delete_outline, size: 18),
           color: AppColors.error,
-          onPressed: () => ref.read(_limitOrderProvider.notifier).deleteOrder(order.id),
+          onPressed: () => ref.read(limitOrderProvider.notifier).deleteOrder(order.id),
         ),
       ],
     );
@@ -1129,7 +763,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
               final price = double.tryParse(_editPriceController.text);
               final amount = double.tryParse(_editAmountController.text);
               if (price == null || amount == null) return;
-              final success = await ref.read(_limitOrderProvider.notifier)
+              final success = await ref.read(limitOrderProvider.notifier)
                   .updateOrder(order.id, UpdateLimitOrderRequest(amount: amount, targetPrice: price));
               if (success) setState(() => _editingOrderId = null);
             },
@@ -1141,7 +775,7 @@ class _CoinDetailScreenState extends ConsumerState<CoinDetailScreen> {
   }
 
   // ── NEWS SECTION ─────────────────────────────────────────
-  Widget _buildNewsSection(BuildContext context, _CoinNewsState news) {
+  Widget _buildNewsSection(BuildContext context, MarketNewsState news) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

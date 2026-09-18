@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
 import '../models/market_news_models.dart';
-import 'market_news_screen.dart';
+import '../providers/market_news_provider.dart';
 
 /// News detail screen — full article view.
 /// Mirrors: frontend/src/views/NewsDetailView.vue

@@ -2,88 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
-import '../providers/auth_provider.dart';
-import '../services/api_client.dart';
 import '../models/market_models.dart';
+import '../providers/market_provider.dart';
 import 'widgets/shimmer_loading.dart';
-
-/// Market API service provider.
-final marketApiProvider = Provider<MarketApi>(
-  (ref) => MarketApi(ref.read(apiClientProvider)),
-);
-
-class MarketApi {
-  final ApiClient _apiClient;
-  MarketApi(this._apiClient);
-
-  Future<List<Coin>> getAllCoins() async {
-    final response = await _apiClient.dio.get('/api/market');
-    return (response.data as List)
-        .map((e) => Coin.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-}
-
-/// Market state
-class MarketState {
-  final List<Coin> coins;
-  final bool isLoading;
-  final String? errorMessage;
-  final String searchQuery;
-
-  const MarketState({
-    this.coins = const [],
-    this.isLoading = false,
-    this.errorMessage,
-    this.searchQuery = '',
-  });
-
-  MarketState copyWith({
-    List<Coin>? coins,
-    bool? isLoading,
-    String? errorMessage,
-    String? searchQuery,
-  }) => MarketState(
-    coins: coins ?? this.coins,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: errorMessage,
-    searchQuery: searchQuery ?? this.searchQuery,
-  );
-
-  List<Coin> get filteredCoins {
-    if (searchQuery.isEmpty) return coins;
-    final q = searchQuery.toLowerCase();
-    return coins.where((c) =>
-        c.name.toLowerCase().contains(q) ||
-        c.symbol.toLowerCase().contains(q)).toList();
-  }
-}
-
-class MarketNotifier extends StateNotifier<MarketState> {
-  final MarketApi _api;
-  MarketNotifier(this._api) : super(const MarketState());
-
-  Future<void> fetchCoins() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final coins = await _api.getAllCoins();
-      state = state.copyWith(coins: coins, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Could not connect to the market server. Please try again.',
-      );
-    }
-  }
-
-  void setSearch(String query) {
-    state = state.copyWith(searchQuery: query);
-  }
-}
-
-final marketProvider = StateNotifierProvider<MarketNotifier, MarketState>(
-  (ref) => MarketNotifier(ref.read(marketApiProvider)),
-);
 
 /// Market screen — coin list with search and stats.
 /// Mirrors: frontend/src/views/MarketView.vue
