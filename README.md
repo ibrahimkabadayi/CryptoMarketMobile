@@ -419,7 +419,7 @@ static const String apiBaseUrl = 'http://localhost:5000';
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## Testing & Quality Assurance
 
 The mobile project includes a full unit test suite covering models, serializers, service dependency injection, and SignalR event dispatchers.
 
