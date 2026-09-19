@@ -273,32 +273,14 @@ This ensures network timeouts or accidental double taps never result in duplicat
 
 State is managed using **Riverpod 2.5 StateNotifiers**:
 
-```
-                  ┌──────────────────────┐
-                  │    User Interaction   │
-                  └──────────┬───────────┘
-                             │
-                             ▼
-                  ┌──────────────────────┐
-                  │    Widget / View     │
-                  └──────────┬───────────┘
-                             │ ref.read(provider.notifier).action()
-                             ▼
-┌────────────────────────────────────────────────────────┐
-│               Riverpod StateNotifier                   │
-│  - Emits immutable State (loading, data, error)        │
-└──────────┬───────────────────────────────────▲─────────┘
-           │ calls                             │ updates state
-           ▼                                   │
-┌──────────────────────┐                       │
-│    Service Layer     │───────────────────────┘
-│  (Auth, Market, etc) │
-└──────────┬───────────┘
-           │ HTTP Request (Bearer JWT + Idempotency-Key)
-           ▼
-┌──────────────────────┐
-│     YARP Gateway     │
-└──────────────────────┘
+```mermaid
+flowchart TD
+    A["User Interaction"] -->|" "| B["Widget / View"]
+    B -->|"ref.read(provider.notifier).action()"| C["Riverpod StateNotifier<br/>Emits immutable State (loading, data, error)"]
+    C -->|"calls"| D["Service Layer<br/>(Auth, Market, etc)"]
+    D -->|"updates state"| C
+    D -->|"HTTP Request (Bearer JWT + Idempotency-Key)"| E["YARP Gateway"]
+
 ```
 
 - **Clean Decoupling**: View widgets contain zero API or HTTP logic; they strictly consume providers via `ref.watch()`.
