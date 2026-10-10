@@ -73,8 +73,8 @@ class PriceAlertNotifier extends StateNotifier<PriceAlertState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final list = state.showAllAlerts
-          ? await _api.getAllAlerts(userId)
-          : await _api.getActiveAlerts(userId);
+          ? await _api.getAllAlerts()
+          : await _api.getActiveAlerts();
       state = state.copyWith(alerts: list, isLoading: false);
     } catch (e) {
       debugPrint('[PriceAlertNotifier] Failed to fetch alerts: $e');
@@ -128,7 +128,7 @@ class PriceAlertNotifier extends StateNotifier<PriceAlertState> {
     if (userId == null) return;
 
     try {
-      await _api.deactivateAlert(alertId, userId);
+      await _api.deactivateAlert(alertId);
       final updated = state.alerts.map((a) {
         if (a.id == alertId) {
           return a.copyWith(isActive: false);

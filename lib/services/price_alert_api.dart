@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../models/price_alert_models.dart';
 import 'api_client.dart';
 
@@ -18,28 +17,24 @@ class PriceAlertApi {
     return response.data?['message']?.toString() ?? 'Alert created successfully';
   }
 
-  /// Get active alerts for a user.
-  Future<List<PriceAlertDto>> getActiveAlerts(String userId) async {
-    final response = await _apiClient.dio.get('/api/price-alerts/user/$userId/active');
+  /// Get active alerts for the authenticated user.
+  Future<List<PriceAlertDto>> getActiveAlerts() async {
+    final response = await _apiClient.dio.get('/api/price-alerts/active');
     return (response.data as List)
         .map((e) => PriceAlertDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  /// Get all alerts (active + inactive) for a user.
-  Future<List<PriceAlertDto>> getAllAlerts(String userId) async {
-    final response = await _apiClient.dio.get('/api/price-alerts/user/$userId/all');
+  /// Get all alerts (active + inactive) for the authenticated user.
+  Future<List<PriceAlertDto>> getAllAlerts() async {
+    final response = await _apiClient.dio.get('/api/price-alerts/all');
     return (response.data as List)
         .map((e) => PriceAlertDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   /// Deactivate an active price alert.
-  Future<void> deactivateAlert(String alertId, String userId) async {
-    await _apiClient.dio.put(
-      '/api/price-alerts/$alertId/deactivate',
-      data: '"$userId"',
-      options: Options(headers: {'Content-Type': 'application/json'}),
-    );
+  Future<void> deactivateAlert(String alertId) async {
+    await _apiClient.dio.put('/api/price-alerts/$alertId/deactivate');
   }
 }
