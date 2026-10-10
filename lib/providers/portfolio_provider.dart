@@ -51,10 +51,8 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
   }
 
   Future<bool> deposit(double amount) async {
-    final walletId = state.dashboard?.walletId;
-    if (walletId == null) return false;
     try {
-      await _api.deposit(walletId, amount);
+      await _api.deposit(amount);
       await fetchDashboard();
       return true;
     } catch (_) {
@@ -63,10 +61,8 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
   }
 
   Future<bool> withdraw(double amount) async {
-    final walletId = state.dashboard?.walletId;
-    if (walletId == null) return false;
     try {
-      await _api.withdraw(walletId, amount);
+      await _api.withdraw(amount);
       await fetchDashboard();
       return true;
     } catch (_) {
@@ -75,10 +71,8 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
   }
 
   Future<bool> buyCoin(String symbol, double amount, double price) async {
-    final walletId = state.dashboard?.walletId;
-    if (walletId == null) return false;
     try {
-      await _api.buyCoin(walletId, symbol, amount, price);
+      await _api.buyCoin(symbol, amount, price);
       await fetchDashboard();
       return true;
     } catch (_) {
@@ -87,10 +81,8 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
   }
 
   Future<bool> sellCoin(String symbol, double amount, double price) async {
-    final walletId = state.dashboard?.walletId;
-    if (walletId == null) return false;
     try {
-      await _api.sellCoin(walletId, symbol, amount, price);
+      await _api.sellCoin(symbol, amount, price);
       await fetchDashboard();
       return true;
     } catch (_) {
