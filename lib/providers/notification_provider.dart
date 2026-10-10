@@ -62,7 +62,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final list = await _notificationApi.getUserNotifications(userId);
+      final list = await _notificationApi.getUserNotifications();
       final unread = list.where((n) => !n.isRead).length;
       state = state.copyWith(
         notifications: list,
@@ -84,7 +84,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     if (userId == null) return;
 
     try {
-      final count = await _notificationApi.getUnreadCount(userId);
+      final count = await _notificationApi.getUnreadCount();
       state = state.copyWith(unreadCount: count);
     } catch (e) {
       debugPrint('[NotificationNotifier] Failed to fetch unread count: $e');
@@ -97,7 +97,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     if (userId == null) return;
 
     try {
-      await _notificationApi.markAsRead(notificationId, userId);
+      await _notificationApi.markAsRead(notificationId);
       final updatedList = state.notifications.map((n) {
         if (n.id == notificationId) {
           return n.copyWith(isRead: true);
@@ -118,7 +118,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     if (userId == null) return;
 
     try {
-      await _notificationApi.markAllAsRead(userId);
+      await _notificationApi.markAllAsRead();
       final updatedList = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
       state = state.copyWith(notifications: updatedList, unreadCount: 0);
     } catch (e) {

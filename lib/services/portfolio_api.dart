@@ -11,41 +11,41 @@ class PortfolioApi {
 
   /// Fetch full wallet dashboard with balances, assets, and transaction history.
   Future<Dashboard> getDashboard() async {
-    final response = await _apiClient.dio.get('/api/wallets');
+    final response = await _apiClient.dio.get('/api/wallet');
     return Dashboard.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// Deposit fiat into user wallet.
-  Future<void> deposit(String walletId, double amount) async {
+  Future<void> deposit(double amount) async {
     await _apiClient.dio.post(
-      '/api/wallets/$walletId/transaction',
+      '/api/wallet/deposits',
       data: {'amount': amount},
       options: Options(headers: ApiClient.idempotencyHeaders),
     );
   }
 
   /// Withdraw fiat from user wallet.
-  Future<void> withdraw(String walletId, double amount) async {
-    await _apiClient.dio.patch(
-      '/api/wallets/$walletId',
+  Future<void> withdraw(double amount) async {
+    await _apiClient.dio.post(
+      '/api/wallet/withdrawals',
       data: {'amount': amount},
       options: Options(headers: ApiClient.idempotencyHeaders),
     );
   }
 
   /// Buy coin asset from user wallet balance.
-  Future<void> buyCoin(String walletId, String symbol, double amount, double price) async {
+  Future<void> buyCoin(String symbol, double amount, double price) async {
     await _apiClient.dio.post(
-      '/api/wallets/$walletId/assets/$symbol',
+      '/api/wallet/assets/$symbol/purchases',
       data: {'amount': amount, 'buyingPrice': price},
       options: Options(headers: ApiClient.idempotencyHeaders),
     );
   }
 
   /// Sell coin asset to user wallet balance.
-  Future<void> sellCoin(String walletId, String symbol, double amount, double price) async {
-    await _apiClient.dio.patch(
-      '/api/wallets/$walletId/assets/$symbol',
+  Future<void> sellCoin(String symbol, double amount, double price) async {
+    await _apiClient.dio.post(
+      '/api/wallet/assets/$symbol/sales',
       data: {'amount': amount, 'price': price},
       options: Options(headers: ApiClient.idempotencyHeaders),
     );

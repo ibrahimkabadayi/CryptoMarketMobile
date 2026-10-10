@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../models/notification_models.dart';
 import 'api_client.dart';
 
@@ -9,32 +8,28 @@ class NotificationApi {
 
   NotificationApi(this._apiClient);
 
-  /// Fetch all notifications for a given user.
-  Future<List<NotificationDto>> getUserNotifications(String userId) async {
-    final response = await _apiClient.dio.get('/api/notifications/user/$userId');
+  /// Fetch all notifications for the authenticated user.
+  Future<List<NotificationDto>> getUserNotifications() async {
+    final response = await _apiClient.dio.get('/api/notifications');
     return (response.data as List)
         .map((e) => NotificationDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  /// Get the total count of unread notifications for a user.
-  Future<int> getUnreadCount(String userId) async {
-    final response = await _apiClient.dio.get('/api/notifications/user/$userId/unread-count');
+  /// Get the total count of unread notifications for the authenticated user.
+  Future<int> getUnreadCount() async {
+    final response = await _apiClient.dio.get('/api/notifications/unread-count');
     return (response.data as num?)?.toInt() ?? 0;
   }
 
   /// Mark a single notification as read.
-  Future<void> markAsRead(String notificationId, String userId) async {
-    await _apiClient.dio.put(
-      '/api/notifications/$notificationId/read',
-      data: '"$userId"',
-      options: Options(headers: {'Content-Type': 'application/json'}),
-    );
+  Future<void> markAsRead(String notificationId) async {
+    await _apiClient.dio.put('/api/notifications/$notificationId/read');
   }
 
-  /// Mark all notifications for a user as read.
-  Future<void> markAllAsRead(String userId) async {
-    await _apiClient.dio.put('/api/notifications/user/$userId/mark-all-read');
+  /// Mark all notifications for the authenticated user as read.
+  Future<void> markAllAsRead() async {
+    await _apiClient.dio.put('/api/notifications/mark-all-read');
   }
 
   /// Create a notification.
